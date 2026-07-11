@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Mon Back-Office Audio - Admin</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 500px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.6;
+            background: #f4f6f9;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 15px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            border-radius: 4px;
+        }
+
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #status {
+            margin-top: 15px;
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card">
+        <!-- 1. CONNEXION -->
+        <div id="login-section">
+            <h2>Connexion Admin</h2>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="login-email" placeholder="admin@monapp.com">
+            </div>
+            <div class="form-group">
+                <label>Mot de passe</label>
+                <input type="password" id="login-password">
+            </div>
+            <button id="btn-login" style="background: #007bff;">Se connecter</button>
+        </div>
+
+        <!-- 2. INTERFACE UPLOAD ET FIRESTORE -->
+        <div id="admin-section" class="hidden">
+            <h2>Ajouter une Musique</h2>
+            <p>Statut : <span id="user-email" style="color: green;"></span></p>
+
+            <div class="form-group">
+                <label>Titre du morceau</label>
+                <input type="text" id="track-title" placeholder="Ex: Midnight Sky">
+            </div>
+            <div class="form-group">
+                <label>Artiste</label>
+                <input type="text" id="track-artist" placeholder="Ex: Miley Cyrus">
+            </div>
+            <div class="form-group">
+                <label>Fichier Audio (MP3)</label>
+                <input type="file" id="track-file" accept="audio/mp3, audio/mpeg">
+            </div>
+
+            <button id="btn-upload">Uploader et Enregistrer</button>
+            <div id="status"></div>
+
+            <button id="btn-logout" style="background:#dc3545; margin-top: 30px; font-size: 14px; padding: 8px;">Se
+                déconnecter</button>
+        </div>
+    </div>
+
+    <!-- 3. LOGIQUE JAVASCRIPT -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // CONFIGURATION FIREBASE (À remplacer par tes clés !)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDSPUArpApBuK0Cn9VbeMtqk4JC-gqruJc",
+            authDomain: "morgann-music-cp.firebaseapp.com",
+            projectId: "morgann-music-cp",
+            storageBucket: "morgann-music-cp.firebasestorage.app",
+            messagingSenderId: "666812685196",
+            appId: "1:666812685196:web:8973e1d62b28b90a8494a9",
+            measurementId: "G-M0ZQQ2RZYZ"
+        };
+
+        // URL DU CLOUDFLARE WORKER CRÉÉ À L'ÉTAPE 1
+        const WORKER_URL = "https://api.play.morgannmusic.uk";
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const loginSection = document.getElementById('login-section');
+        const adminSection = document.getElementById('admin-section');
+        const userEmailSpan = document.getElementById('user-email');
+        const statusDiv = document.getElementById('status');
+        const btnUpload = document.getElementById('btn-upload');
+
+        // Authentification
+        document.getElementById('btn-login').addEventListener('click', async () => {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (error) { alert("Erreur : " + error.message); }
+        });
+
+        document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                loginSection.classList.add('hidden');
+                adminSection.classList.remove('hidden');
+                userEmailSpan.textContent = user.email;
+            } else {
+                loginSection.classList.remove('hidden');
+                adminSection.classList.add('hidden');
+            }
+        });
+
+        // Logique d'envoi R2 + Firestore
+        btnUpload.addEventListener('click', async () => {
+            const title = document.getElementById('track-title').value;
+            const artist = document.getElementById('track-artist').value;
+            const fileInput = document.getElementById('track-file');
+            const file = fileInput.files[0];
+
+            if (!title || !artist || !file) {
+                alert("Veuillez remplir tous les champs et sélectionner un fichier MP3.");
+                return;
+            }
+
+            try {
+                btnUpload.disabled = true;
+                statusDiv.textContent = "1/2 : Envoi du fichier sur Cloudflare R2...";
+
+                // Générer un nom de fichier unique pour éviter les doublons dans R2
+                const uniqueFileName = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+
+                // --- ACTION 1 : Envoi du binaire au Cloudflare Worker ---
+                const uploadResponse = await fetch(WORKER_URL, {
+                    method: "POST",
+                    headers: {
+                        "X-File-Name": uniqueFileName,
+                        "X-File-Type": file.type
+                    },
+                    body: file // On envoie le fichier pur
+                });
+
+                if (!uploadResponse.ok) throw new Error("Échec du téléversement vers Cloudflare.");
+                const uploadResult = await uploadResponse.json();
+
+                statusDiv.textContent = "2/2 : Fichier stocké ! Enregistrement dans Firebase...";
+
+                // --- ACTION 2 : Enregistrement des infos + URL R2 dans Firestore ---
+                await addDoc(collection(db, "tracks"), {
+                    title: title,
+                    artist: artist,
+                    audioUrl: uploadResult.url, // L'URL finale fournie par le Worker
+                    createdAt: serverTimestamp()
+                });
+
+                statusDiv.textContent = "✓ Succès total ! Musique ajoutée au catalogue.";
+
+                // Réinitialisation du formulaire
+                document.getElementById('track-title').value = '';
+                document.getElementById('track-artist').value = '';
+                fileInput.value = '';
+
+            } catch (error) {
+                statusDiv.textContent = "❌ Erreur : " + error.message;
+            } finally {
+                btnUpload.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>

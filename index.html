@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Morgann Music - Login / Register</title>
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Access your Morgann Music portal. Register or sign in to explore your music playlists, play games, and connect with your audio world.">
+  <meta name="keywords" content="Morgann Music, Music Login, Audio Portal, Web Music Player">
+  <meta name="author" content="Morgann Music">
+  
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Animated Background Mesh -->
+  <div class="bg-mesh">
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-orb orb-3"></div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Main Container -->
+  <main class="main-wrapper">
+    <!-- Auth Card -->
+    <div class="auth-card" id="auth-card">
+      
+      <!-- Sign In Form Panel -->
+      <div class="form-container sign-in-container">
+        <form id="sign-in-form" novalidate>
+          <div class="brand-logo">
+            <i class="fa-solid fa-compact-disc fa-spin-slow"></i>
+            <span>Morgann Music</span>
+          </div>
+          <h1>Welcome Back</h1>
+          <p class="subtitle">Enter your details to access your account</p>
+          
+          <div class="input-group">
+            <i class="fa-regular fa-envelope input-icon"></i>
+            <input type="email" id="login-email" placeholder=" " required autocomplete="email">
+            <label for="login-email">Email Address</label>
+            <span class="error-msg" id="login-email-error"></span>
+          </div>
+          
+          <div class="input-group">
+            <i class="fa-regular fa-lock input-icon"></i>
+            <input type="password" id="login-password" placeholder=" " required autocomplete="current-password">
+            <label for="login-password">Password</label>
+            <i class="fa-regular fa-eye toggle-password" data-target="login-password"></i>
+            <span class="error-msg" id="login-password-error"></span>
+          </div>
+          
+          <div class="form-actions">
+            <label class="checkbox-container">
+              <input type="checkbox" id="remember-me">
+              <span class="checkmark"></span>
+              Remember me
+            </label>
+            <a href="#" class="forgot-pass-btn" id="forgot-password-link">Forgot password?</a>
+          </div>
+          
+          <button type="submit" class="btn btn-primary" id="btn-login">
+            <span>Sign In</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+          
+          <div class="divider">
+            <span>or continue with</span>
+          </div>
+          
+          <div class="social-login">
+            <button type="button" class="btn btn-social" id="btn-google-login">
+              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/action/google.svg" alt="Google Logo">
+              <span>Google</span>
+            </button>
+          </div>
+          
+          <p class="switch-text-mobile">
+            New here? <a href="#" class="switch-to-signup">Create an account</a>
+          </p>
+        </form>
+      </div>
+
+      <!-- Sign Up Form Panel -->
+      <div class="form-container sign-up-container">
+        <form id="sign-up-form" novalidate>
+          <div class="brand-logo">
+            <i class="fa-solid fa-compact-disc fa-spin-slow"></i>
+            <span>Morgann Music</span>
+          </div>
+          <h1>Create Account</h1>
+          <p class="subtitle">Join us and start your audio journey today</p>
+          
+          <div class="input-group">
+            <i class="fa-regular fa-user input-icon"></i>
+            <input type="text" id="register-name" placeholder=" " required autocomplete="name">
+            <label for="register-name">Full Name</label>
+            <span class="error-msg" id="register-name-error"></span>
+          </div>
+          
+          <div class="input-group">
+            <i class="fa-regular fa-envelope input-icon"></i>
+            <input type="email" id="register-email" placeholder=" " required autocomplete="email">
+            <label for="register-email">Email Address</label>
+            <span class="error-msg" id="register-email-error"></span>
+          </div>
+          
+          <div class="input-group">
+            <i class="fa-regular fa-lock input-icon"></i>
+            <input type="password" id="register-password" placeholder=" " required autocomplete="new-password">
+            <label for="register-password">Password</label>
+            <i class="fa-regular fa-eye toggle-password" data-target="register-password"></i>
+            <span class="error-msg" id="register-password-error"></span>
+          </div>
+          
+          <div class="input-group">
+            <i class="fa-regular fa-lock-keyhole input-icon"></i>
+            <input type="password" id="register-confirm-password" placeholder=" " required autocomplete="new-password">
+            <label for="register-confirm-password">Confirm Password</label>
+            <i class="fa-regular fa-eye toggle-password" data-target="register-confirm-password"></i>
+            <span class="error-msg" id="register-confirm-password-error"></span>
+          </div>
+          
+          <button type="submit" class="btn btn-primary" id="btn-register">
+            <span>Sign Up</span>
+            <i class="fa-solid fa-user-plus"></i>
+          </button>
+          
+          <p class="switch-text-mobile">
+            Already have an account? <a href="#" class="switch-to-signin">Sign In</a>
+          </p>
+        </form>
+      </div>
+
+      <!-- Slide Overlay Panel (Desktop only animation helper) -->
+      <div class="overlay-container">
+        <div class="overlay">
+          <div class="overlay-panel overlay-left">
+            <h2>Welcome Back!</h2>
+            <p>To stay connected with your sound library, please log in with your personal credentials.</p>
+            <button class="btn btn-ghost" id="signIn">Sign In</button>
+          </div>
+          <div class="overlay-panel overlay-right">
+            <h2>Hello, Friend!</h2>
+            <p>Enter your details and start organizing, sharing, and playing your music collection.</p>
+            <button class="btn btn-ghost" id="signUp">Sign Up</button>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+
+    <!-- Authenticated State UI (Initially Hidden) -->
+    <div class="dashboard-card hidden" id="dashboard-card">
+      <div class="brand-logo">
+        <i class="fa-solid fa-compact-disc fa-spin-slow"></i>
+        <span>Morgann Music Portal</span>
+      </div>
+      <div class="user-avatar-container">
+        <div class="user-avatar" id="user-avatar">
+          <i class="fa-solid fa-user-music"></i>
+        </div>
+      </div>
+      <h2 id="welcome-message">Welcome, User!</h2>
+      <p id="user-email-display" class="user-email-display"></p>
+      
+      <div class="dashboard-content">
+        <div class="status-badge">
+          <span class="pulse-dot"></span>
+          <span>Firebase Authenticated</span>
+        </div>
+        
+        <div class="quick-links">
+          <h3>Quick Links</h3>
+          <div class="links-grid">
+            <a href="../Morgann Music Games/index.html" class="link-item">
+              <i class="fa-solid fa-gamepad"></i>
+              <span>Play Games</span>
+            </a>
+            <a href="#" class="link-item disabled">
+              <i class="fa-solid fa-music"></i>
+              <span>Music Player</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-danger" id="btn-logout">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span>Sign Out</span>
+      </button>
+    </div>
+  </main>
+
+  <!-- Auth Logic Javascript Module -->
+  <script type="module" src="auth.js"></script>
+</body>
+</html>
