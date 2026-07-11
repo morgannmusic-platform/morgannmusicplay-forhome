@@ -24,8 +24,12 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+import { initializeAuth, browserLocalPersistence, indexedDBLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+// On force Firebase à utiliser le stockage local compatible avec la WebView Google Home
+const auth = initializeAuth(app, {
+    persistence: [indexedDBLocalPersistence, browserLocalPersistence]
+}); const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
 // ÉLÉMENTS DU DOM
