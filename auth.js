@@ -57,9 +57,10 @@ async function handleGoogleHomeRedirect(user) {
                 createdAt: serverTimestamp()
             });
 
-            // 3. On redirige l'écran vers Google Home en lui transmettant le code et le 'state' d'origine
-            const finalRedirectUrl = `${redirectUri}?code=${authCode}&state=${state}`;
-            window.location.href = finalRedirectUrl;
+            // 3. MODIFICATION ICI : On force la redirection brute pour réveiller le mini-navigateur Google Home
+            const finalRedirectUrl = `${redirectUri}?code=${encodeURIComponent(authCode)}&state=${encodeURIComponent(state)}`;
+            window.location.assign(finalRedirectUrl);
+
         } catch (error) {
             alert("OAuth Storage Error: " + error.message);
         }
