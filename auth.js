@@ -4,7 +4,7 @@ import {
     getAuth,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    signInWithPopup,
+    signInWithRedirect, // Changé Popup en Redirect pour Google Home
     GoogleAuthProvider,
     signOut,
     onAuthStateChanged,
@@ -45,11 +45,9 @@ const clientId = urlParams.get('client_id');
 // Fonction cruciale qui renvoie l'utilisateur vers Google Home après sa connexion
 async function handleGoogleHomeRedirect(user) {
     if (redirectUri && state) {
-        // 1. On génère un code d'autorisation temporaire unique
         const authCode = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
         try {
-            // 2. On stocke ce code temporaire dans Firestore pour que notre Worker puisse le valider plus tard
             await addDoc(collection(db, "oauth_codes"), {
                 code: authCode,
                 uid: user.uid,
@@ -57,12 +55,17 @@ async function handleGoogleHomeRedirect(user) {
                 createdAt: serverTimestamp()
             });
 
-            // 3. MODIFICATION ICI : On force la redirection brute pour réveiller le mini-navigateur Google Home
             const finalRedirectUrl = `${redirectUri}?code=${encodeURIComponent(authCode)}&state=${encodeURIComponent(state)}`;
-            window.location.assign(finalRedirectUrl);
+
+            // Étape de secours si assign() échoue
+            try {
+                window.location.assign(finalRedirectUrl);
+            } catch (e) {
+                window.location.href = finalRedirectUrl;
+            }
 
         } catch (error) {
-            alert("OAuth Storage Error: " + error.message);
+            alert("Erreur stockage Firestore: " + error.message);
         }
     }
 }
@@ -71,13 +74,11 @@ async function handleGoogleHomeRedirect(user) {
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
-        // Si l'utilisateur vient de l'app Google Home, on zappe le dashboard et on le redirige direct !
         if (redirectUri && state) {
             handleGoogleHomeRedirect(user);
             return;
         }
 
-        // Sinon, affichage classique du Dashboard Web
         authCard.classList.add('hidden');
         dashboardCard.classList.remove('hidden');
         welcomeMessage.textContent = `Welcome, ${user.displayName || 'Music Lover'}!`;
@@ -91,14 +92,18 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// Connexion Classique
+// Connexion Classique (Email/Mot de passe)
 document.getElementById('sign-in-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
     try {
         await signInWithEmailAndPassword(auth, email, password);
-    } catch (error) { document.getElementById('login-password-error').textContent = error.message; }
+    } catch (error) {
+        // On affiche l'erreur en clair pour comprendre pourquoi ça bloque !
+        alert("Erreur de connexion : " + error.message);
+        document.getElementById('login-password-error').textContent = error.message;
+    }
 });
 
 // Inscription Classique
@@ -110,13 +115,14 @@ document.getElementById('sign-up-form').addEventListener('submit', async (e) => 
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(userCredential.user, { displayName: name });
-    } catch (error) { document.getElementById('register-confirm-password-error').textContent = error.message; }
+    } catch (error) { alert("Erreur inscription : " + error.message); }
 });
 
-// Connexion avec Google
+// Connexion avec Google (CORRIGÉ POUR GOOGLE HOME)
 document.getElementById('btn-google-login').addEventListener('click', async () => {
     try {
-        await signInWithPopup(auth, googleProvider);
+        // signInWithPopup est bloqué par Google Home, on utilise obligatoirement Redirect
+        await signInWithRedirect(auth, googleProvider);
     } catch (error) { alert("Google Login Error: " + error.message); }
 });
 
